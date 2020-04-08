@@ -1,1 +1,55 @@
+1.Write a SQL query to get the second highest salary from the Employee table.
 
+select max(Salary) as SecondHighestSalary
+from Employee
+where Salary < (select max(Salary) from Employee ) 
+
+2. The Trips table holds all taxi trips. Each trip has a unique Id, while Client_Id and Driver_Id are both foreign keys to the 
+Users_Id at the Users table. Status is an ENUM type of (‘completed’, ‘cancelled_by_driver’, ‘cancelled_by_client’).
+Write a SQL query to find the cancellation rate of requests made by unbanned users (both client and driver must be unbanned) 
+between Oct 1, 2013 and Oct 3, 2013. The cancellation rate is computed by dividing the number of canceled (by client or driver) requests made by unbanned users by the total number of requests made by unbanned users.
+
+select Request_at as Day, round(sum(stat)/count(stat),2) as 'Cancellation Rate'
+from(
+select Client_id,Request_at,Case when status='cancelled_by_driver' or status='cancelled_by_client' then 1 else 0  end stat
+from Trips t left join Users u on Client_Id=Users_Id
+where Banned='No' and request_at BETWEEN '2013-10-01' AND '2013-10-03'
+) a
+group by Request_at
+
+3.Given the Employee table, write a SQL query that finds out employees who earn more than their managers. For the above table, 
+Joe is the only employee who earns more than his manager.
+
+select Name as Employee from (
+select e.Name,e.Salary,e2.Salary as 'manager'
+from Employee e left join  Employee e2 on e.ManagerId=e2.Id) a
+where  Salary > manager
+
+4.Write a SQL query to rank scores. If there is a tie between two scores, both should have the same ranking. Note that after a tie, the next ranking number should be the next consecutive integer value. 
+In other words, there should be no "holes" between ranks.
+
+select Score, DENSE_RANK() OVER (ORDER BY Score Desc) Rank
+from Scores
+
+5.Write an SQL query to reformat the table such that there is a department id column and a revenue column for each month.
+
+select id, 
+Jan AS Jan_Revenue, 
+Feb AS Feb_Revenue, 
+Mar AS Mar_Revenue, 
+Apr AS Apr_Revenue,
+May AS May_Revenue,
+Jun AS Jun_Revenue,
+Jul AS Jul_Revenue,
+Aug AS Aug_Revenue,
+Sep AS Sep_Revenue,
+Oct AS Oct_Revenue,
+Nov AS Nov_Revenue,
+Dec AS Dec_Revenue 
+from Department
+PIVOT
+(
+    MAX(revenue) 
+ for month in ([Jan],[Feb],[Mar],[Apr],[May],[Jun],[Jul],[Aug],[Sep],[Oct],[Nov],[Dec])
+) 
+ As PivotTable
